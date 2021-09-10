@@ -8,15 +8,12 @@ use PHP_CodeSniffer\Config;
 use PHP_CodeSniffer\Files\File as BaseFile;
 use PHP_CodeSniffer\Fixer;
 use PHP_CodeSniffer\Sniffs\Sniff;
-use PHP_CodeSniffer\Standards\Generic\Sniffs\CodeAnalysis\AssignmentInConditionSniff;
-use PHP_CodeSniffer\Standards\Generic\Sniffs\CodeAnalysis\ForLoopShouldBeWhileLoopSniff;
-use PHP_CodeSniffer\Standards\PSR2\Sniffs\Classes\PropertyDeclarationSniff;
-use PHP_CodeSniffer\Standards\PSR2\Sniffs\Methods\MethodDeclarationSniff;
 use PHP_CodeSniffer\Util\Common;
 use Symplify\EasyCodingStandard\Console\Style\EasyCodingStandardStyle;
 use Symplify\EasyCodingStandard\SniffRunner\DataCollector\SniffMetadataCollector;
 use Symplify\EasyCodingStandard\SniffRunner\Exception\File\NotImplementedException;
 use Symplify\EasyCodingStandard\SniffRunner\ValueObject\Error\CodingStandardError;
+use Symplify\EasyCodingStandard\ValueObject\WarningToError;
 use Symplify\Skipper\Skipper\Skipper;
 use Symplify\SmartFileSystem\SmartFileInfo;
 
@@ -25,25 +22,6 @@ use Symplify\SmartFileSystem\SmartFileInfo;
  */
 final class File extends BaseFile
 {
-    /**
-     * Explicit list for classes that use only warnings. ECS only reports errors, so this one promotes them to error.
-     *
-     * @var array<class-string<Sniff>>
-     */
-    private const REPORT_WARNINGS_SNIFFS = [
-        AssignmentInConditionSniff::class,
-        PropertyDeclarationSniff::class,
-        MethodDeclarationSniff::class,
-        ForLoopShouldBeWhileLoopSniff::class,
-    ];
-
-    /**
-     * Additional list for sniff classes to report warnings as errors.
-     *
-     * @var array<class-string<Sniff>>
-     */
-    private array $reportWarnings = [];
-
     /**
      * @var string
      */
@@ -66,6 +44,8 @@ final class File extends BaseFile
 
     private ?SmartFileInfo $fileInfo = null;
 
+    private WarningToError $warningToError;
+
     public function __construct(
         string $path,
         string $content,
@@ -81,6 +61,8 @@ final class File extends BaseFile
         $this->fixer = $fixer;
 
         $this->eolChar = Common::detectLineEndings($content);
+
+        $this->warningToError = new WarningToError();
 
         // compat
         if (! defined('PHP_CODESNIFFER_CBF')) {
@@ -164,7 +146,7 @@ final class File extends BaseFile
      */
     public function addWarning($warning, $stackPtr, $code, $data = [], $severity = 0, $fixable = false): bool
     {
-        if (! $this->isSniffClassWarningAllowed($this->activeSniffClass)) {
+        if (! $this->warningToError->hasSniffClass($this->activeSniffClass)) {
             return false;
         }
 
@@ -255,20 +237,8 @@ final class File extends BaseFile
         return $this->skipper->shouldSkipElementAndFileInfo($message, $this->fileInfo);
     }
 
-    private function isSniffClassWarningAllowed(string $sniffClass): bool
+    public function setWarningToError(WarningToError $warningToError): void
     {
-        $reportWarningsSniffClasses = array_merge(self::REPORT_WARNINGS_SNIFFS, $this->reportWarnings);
-        foreach ($reportWarningsSniffClasses as $reportWarningsSniff) {
-            if (is_a($sniffClass, $reportWarningsSniff, true)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public function setReportWarnings(array $reportWarnings): void
-    {
-        $this->reportWarnings = $reportWarnings;
+        $this->warningToError = $warningToError;
     }
 }

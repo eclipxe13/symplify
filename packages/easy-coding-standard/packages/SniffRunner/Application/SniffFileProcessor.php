@@ -81,8 +81,7 @@ final class SniffFileProcessor implements FileProcessorInterface
         $errorsAndDiffs = [];
 
         $file = $this->fileFactory->createFromFileInfo($smartFileInfo);
-
-        $file->setReportWarnings($configuration->getReportWarnings());
+        $file->setWarningToError($configuration->getWarningToError());
 
         $this->fixFile($file, $this->fixer, $smartFileInfo, $this->tokenListeners);
 

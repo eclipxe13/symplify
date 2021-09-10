@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace Symplify\EasyCodingStandard\ValueObject;
 
+use PHP_CodeSniffer\Sniffs\Sniff;
 use Symplify\EasyCodingStandard\Console\Output\ConsoleOutputFormatter;
 
 final class Configuration
 {
+    private WarningToError $warningToError;
+
     /**
      * @param string[] $sources
-     * @param string[] $reportWarnings
+     * @param array<class-string<Sniff>> $reportWarnings
      */
     public function __construct(
         private bool $isFixer = false,
@@ -22,8 +25,9 @@ final class Configuration
         private bool $doesMatchGitDiff = false,
         private bool $isParallel = false,
         private ?string $config = null,
-        private array $reportWarnings = [],
+        array $reportWarnings = [],
     ) {
+        $this->warningToError = new WarningToError($reportWarnings);
     }
 
     public function isFixer(): bool
@@ -74,11 +78,8 @@ final class Configuration
         return $this->config;
     }
 
-    /**
-     * @return string[]
-     */
-    public function getReportWarnings(): array
+    public function getWarningToError(): WarningToError
     {
-        return $this->reportWarnings;
+        return $this->warningToError;
     }
 }

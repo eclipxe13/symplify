@@ -40,7 +40,10 @@ final class ConfigurationFactory
             $config = (string) $config;
         }
 
-        $reportWarnings = $this->parameterProvider->provideArrayParameter(Option::REPORT_WARNINGS);
+        $reportWarnings = [];
+        if ($this->parameterProvider->hasParameter(Option::REPORT_WARNINGS)) {
+            $reportWarnings = $this->parameterProvider->provideArrayParameter(Option::REPORT_WARNINGS);
+        }
 
         return new Configuration(
             $isFixer,
