@@ -40,6 +40,11 @@ final class ConfigurationFactory
             $config = (string) $config;
         }
 
+        $reportWarnings = [];
+        if ($this->parameterProvider->hasParameter(Option::REPORT_WARNINGS)) {
+            $reportWarnings = $this->parameterProvider->provideArrayParameter(Option::REPORT_WARNINGS);
+        }
+
         return new Configuration(
             $isFixer,
             $shouldClearCache,
@@ -49,7 +54,8 @@ final class ConfigurationFactory
             $outputFormat,
             $doesMatchGitDiff,
             $isParallel,
-            $config
+            $config,
+            $reportWarnings,
         );
     }
 
